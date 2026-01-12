@@ -4,6 +4,8 @@ import { db } from "@/db/drizzle";
 import { creatures, InsertCreature, SelectCreature } from "@/db/schema";
 import { put } from "@vercel/blob";
 import { GoogleGenAI } from "@google/genai";
+import { redirect } from "next/navigation";
+import { saveCreature } from "./creatures";
 
 const ai = new GoogleGenAI({
   apiKey: process.env.GEMINI_API!,
@@ -142,7 +144,7 @@ export async function submitGithubForm(githubProfileUrl: string) {
                 image: blob.url,
             })
 
-            return creature;
+            redirect(`/creature/${creature.id}`);
 
           } else {
             console.error("Image data is undefined or not a string.");
@@ -154,20 +156,6 @@ export async function submitGithubForm(githubProfileUrl: string) {
     }
   } catch (error) {
     console.error("Error in submitGithubForm:", error);
-    throw error;
-  }
-
-  // const description = await generateCreatureDescription(githubProfileUrl, stats.total_count);
-  // const creature = saveCreature(githubProfileUrl, stats.total_count, image.text, description.text);
-  // return creature;
-}
-
-export async function saveCreature(creature: InsertCreature) {
-  try {
-    const newCreature = await db.insert(creatures).values(creature);
-    return newCreature;
-  } catch (error) {
-    console.error("Error in saveCreature:", error);
     throw error;
   }
 }
