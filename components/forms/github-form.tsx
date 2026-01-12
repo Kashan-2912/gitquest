@@ -23,7 +23,7 @@ const formSchema = z.object({
   githubProfileUrl: z.string().startsWith("https://github.com/"),
 });
 
-export function BugReportForm() {
+export function GithubForm() {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
