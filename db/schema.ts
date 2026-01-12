@@ -9,3 +9,6 @@ export const creatures = pgTable('creatures', {
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updateAt: timestamp('updated_at').defaultNow().notNull(),
 });
+
+export type SelectCreature = typeof creatures.$inferSelect;
+export type InsertCreature = typeof creatures.$inferInsert;

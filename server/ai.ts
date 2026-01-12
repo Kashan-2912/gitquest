@@ -1,11 +1,9 @@
 "use server";
 
 import { db } from "@/db/drizzle";
-import { creatures } from "@/db/schema";
-import { generateText } from "ai";
+import { creatures, InsertCreature, SelectCreature } from "@/db/schema";
 import { put } from "@vercel/blob";
 import { GoogleGenAI } from "@google/genai";
-import fs from "fs";
 
 const ai = new GoogleGenAI({
   apiKey: process.env.GEMINI_API!,
@@ -23,7 +21,6 @@ export async function fetchGithubStats(username: string) {
 
 export async function generateCreatureImage(
   githubProfileUrl: string,
-
   contributions: number
 ) {
   const response = await ai.models.generateContent({
@@ -106,58 +103,71 @@ export async function generateCreatureImage(
 }
 
 export async function submitGithubForm(githubProfileUrl: string) {
-  const username = githubProfileUrl.split("/").pop();
-  const stats = await fetchGithubStats(username!);
-  const image = await generateCreatureImage(
-    githubProfileUrl,
-    stats.total_count
-  );
+  try {
+    const username = githubProfileUrl.split("/").pop();
+    const stats = await fetchGithubStats(username!);
+    const image = await generateCreatureImage(
+      githubProfileUrl,
+      stats.total_count
+    );
 
-  if (
-    image.candidates &&
-    image.candidates[0] &&
-    image.candidates[0].content &&
-    image.candidates[0].content.parts
-  ) {
-    for (const part of image.candidates[0].content.parts) {
+    const description = image.text;
 
+    if (
+      image.candidates &&
+      image.candidates[0] &&
+      image.candidates[0].content &&
+      image.candidates[0].content.parts
+    ) {
+      for (const part of image.candidates[0].content.parts) {
         // description part
-      if (part.text) {
-        console.log(part.text);
+        if (part.text) {
+            console.log("DESCRIPTION: ", description)
 
-        // img part
-      } else if (part.inlineData) {
-        const imageData = part.inlineData.data;
-        if (typeof imageData === "string") {
-          const buffer = Buffer.from(imageData, "base64");
-          const blob = await put(`image-${username}.png`, buffer, {
-            access: "public",
-          });
+          // img part
+        } else if (part.inlineData) {
+          const imageData = part.inlineData.data;
+          if (typeof imageData === "string") {
+            const buffer = Buffer.from(imageData, "base64");
+            const blob = await put(`img-${username}.png`, buffer, {
+              access: "public",
+            });
 
-          console.log(blob.url);
-          return blob.url;
-        } else {
-          console.error("Image data is undefined or not a string.");
+            console.log(blob.url);
+
+            const creature = await saveCreature({
+                githubProfileUrl,
+                contributions: stats.total_count,
+                description: description!,
+                image: blob.url,
+            })
+
+            return creature;
+
+          } else {
+            console.error("Image data is undefined or not a string.");
+          }
         }
       }
+    } else {
+      console.error("Invalid response structure from AI model.");
     }
-  } else {
-    console.error("Invalid response structure from AI model.");
+  } catch (error) {
+    console.error("Error in submitGithubForm:", error);
+    throw error;
   }
-
-    console.log(image);
 
   // const description = await generateCreatureDescription(githubProfileUrl, stats.total_count);
   // const creature = saveCreature(githubProfileUrl, stats.total_count, image.text, description.text);
   // return creature;
 }
 
-// export async function saveCreature(githubProfileUrl:string, contributions: number, image: string, description: string){
-//     const creature = await db.insert(creatures).values({
-//         githubProfileUrl,
-//         contributions,
-//         image,
-//         description,
-// });
-//     return creature;
-// }
+export async function saveCreature(creature: InsertCreature) {
+  try {
+    const newCreature = await db.insert(creatures).values(creature);
+    return newCreature;
+  } catch (error) {
+    console.error("Error in saveCreature:", error);
+    throw error;
+  }
+}
