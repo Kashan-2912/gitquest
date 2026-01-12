@@ -17,7 +17,7 @@ import {
   FieldGroup,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { fetchGithubStats } from "@/server/ai";
+import { fetchGithubStats, submitGithubForm } from "@/server/ai";
 
 const formSchema = z.object({
   githubProfileUrl: z.string().startsWith("https://github.com/"),
@@ -32,7 +32,7 @@ export function BugReportForm() {
   });
 
   async function onSubmit(data: z.infer<typeof formSchema>) {
-    const stats = await fetchGithubStats(data.githubProfileUrl);
+    const stats = await submitGithubForm(data.githubProfileUrl);
     console.log(stats)
     toast.success("Github stats fetched successfully!");
   }
