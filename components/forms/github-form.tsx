@@ -65,7 +65,7 @@ export function GithubForm() {
                       autoComplete="off"
                     />
                     <Button type="submit" form="form-rhf-demo" disabled={loading}>
-                      {loading ? <HugeiconsIcon className="animate-spin" icon={Loading03Icon} /> : "Submit"}
+                      {loading ? <HugeiconsIcon className="animate-spin" icon={Loading03Icon} /> : "Summon"}
                     </Button>
                   </div>
 
