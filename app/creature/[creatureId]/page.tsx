@@ -12,7 +12,7 @@ const page = async ({ params }: { params: Params }) => {
   }
 
   return (
-    <div className="flex flex-col items-center justify-center pt-5">
+    <div className="flex flex-col items-center justify-center pt-24 min-h-screen">
       <CreatureCard creature={creature} />
     </div>
   );

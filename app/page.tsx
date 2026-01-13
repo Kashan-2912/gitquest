@@ -1,37 +1,29 @@
-import { GithubForm } from "@/components/forms/github-form";
-import LatestCreatures from "@/components/LatestCreatures";
-import { Skeleton } from "@/components/ui/skeleton";
-import { getSixLatestCreatures } from "@/server/creatures";
-import { Suspense } from "react";
+import CreatureCard from "@/components/creature-card";
+import { getThreeLatestCreatures } from "@/server/creatures";
+import Link from "next/link";
 
-async function CreaturesWrapper() {
-  const creatures = await getSixLatestCreatures();
-  return <LatestCreatures creatures={creatures} />;
-}
+export default async function Page() {
+  const creatures = await getThreeLatestCreatures();
 
-export default function Page() {
   return (
-    <main className="flex flex-col gap-5 items-center justify-center min-h-screen py-10">
-      <h1 className="text-3xl font-bold">
-        Summon the Creature Behind Your Code
-      </h1>
+    <main className="min-h-screen py-20 px-6">
+      <div className="max-w-7xl mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {creatures.map((creature) => (
+            <Link href={`/creature/${creature.id}`} key={creature.id}>
+              <div className="transform transition-transform hover:scale-105">
+                <CreatureCard creature={creature} />
+              </div>
+            </Link>
+          ))}
+        </div>
 
-      <GithubForm />
-
-      <Suspense
-        fallback={
-          <div className="flex flex-col gap-5 px-5">
-            <h2 className="text-xl font-semibold">Latest Creatures</h2>
-            <div className="flex flex-wrap gap-2 justify-center">
-              {[...Array(10)].map((_, i) => (
-                <Skeleton key={i} className="h-10 w-20" />
-              ))}
-            </div>
+        {creatures.length === 0 && (
+          <div className="text-center py-20">
+            <p className="text-xl text-muted-foreground">No creatures yet. Be the first to summon one!</p>
           </div>
-        }
-      >
-        <CreaturesWrapper />
-      </Suspense>
+        )}
+      </div>
     </main>
   );
 }

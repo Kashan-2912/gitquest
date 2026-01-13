@@ -40,3 +40,16 @@ export async function getSixLatestCreatures() {
     throw error;
   }
 }
+
+export async function getThreeLatestCreatures() {
+  try {
+    const creatures = await db.query.creatures.findMany({
+      orderBy: (creatures, { desc }) => desc(creatures.createdAt),
+      limit: 3,
+    });
+    return creatures;
+  } catch (error) {
+    console.error("Error in getThreeLatestCreatures:", error);
+    throw error;
+  }
+}
