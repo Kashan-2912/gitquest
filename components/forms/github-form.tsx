@@ -64,7 +64,7 @@ export function GithubForm() {
                       placeholder="https://github.com/username"
                       autoComplete="off"
                     />
-                    <Button type="submit" form="form-rhf-demo" disabled={loading}>
+                    <Button className={"cursor-pointer"} type="submit" form="form-rhf-demo" disabled={loading}>
                       {loading ? <HugeiconsIcon className="animate-spin" icon={Loading03Icon} /> : "Summon"}
                     </Button>
                   </div>

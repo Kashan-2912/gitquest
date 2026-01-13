@@ -32,7 +32,7 @@ export async function getSixLatestCreatures() {
   try {
     const creatures = await db.query.creatures.findMany({
       orderBy: (creatures, { desc }) => desc(creatures.createdAt),
-      limit: 6,
+      limit: 10,
     });
     return creatures;
   } catch (error) {
