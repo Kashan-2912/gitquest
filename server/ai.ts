@@ -1,7 +1,5 @@
 "use server";
 
-import { db } from "@/db/drizzle";
-import { creatures, InsertCreature, SelectCreature } from "@/db/schema";
 import { put } from "@vercel/blob";
 import { GoogleGenAI } from "@google/genai";
 import { redirect } from "next/navigation";
@@ -144,7 +142,7 @@ export async function submitGithubForm(githubProfileUrl: string) {
                 image: blob.url,
             })
 
-            redirect(`/creature/${creature.id}`);
+            redirect(`/${creature.githubProfileUrl.split("/").pop()}`);
 
           } else {
             console.error("Image data is undefined or not a string.");

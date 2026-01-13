@@ -18,7 +18,7 @@ const Header = () => {
         <Link href="/summon" className="text-lg font-medium hover:text-primary transition-colors">
           Summon
         </Link>
-        <Link href="/" className="text-lg font-medium hover:text-primary transition-colors">
+        <Link href="/leaderboard" className="text-lg font-medium hover:text-primary transition-colors">
           Leaderboard
         </Link>
         <ModeToggle />

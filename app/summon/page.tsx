@@ -1,11 +1,11 @@
 import { GithubForm } from "@/components/forms/github-form";
 import LatestCreatures from "@/components/LatestCreatures";
 import { Skeleton } from "@/components/ui/skeleton";
-import { getSixLatestCreatures } from "@/server/creatures";
+import { getTenLatestCreatures } from "@/server/creatures";
 import { Suspense } from "react";
 
 async function CreaturesWrapper() {
-  const creatures = await getSixLatestCreatures();
+  const creatures = await getTenLatestCreatures();
   return <LatestCreatures creatures={creatures} />;
 }
 

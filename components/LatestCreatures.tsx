@@ -29,7 +29,7 @@ const LatestCreatures = ({ creatures }: LatestCreaturesProps) => {
             nativeButton={false}
             className="w-[19%] cursor-pointer justify-center truncate"
             render={
-              <Link href={`/creature/${creature.id}`}>
+              <Link href={`/${creature.githubProfileUrl.split("/").pop()}`}>
                 {creature.githubProfileUrl.split("/").pop()}
               </Link>
             }

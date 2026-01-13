@@ -1,29 +1,22 @@
-import CreatureCard from "@/components/creature-card";
-import { getThreeLatestCreatures } from "@/server/creatures";
+import CreaturesShowcase from "@/components/creatures-showcase";
+import { GithubForm } from "@/components/forms/github-form";
 import Link from "next/link";
+import { Suspense } from "react";
 
 export default async function Page() {
-  const creatures = await getThreeLatestCreatures();
-
   return (
-    <main className="min-h-screen py-20 px-6">
-      <div className="max-w-7xl mx-auto">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {creatures.map((creature) => (
-            <Link href={`/creature/${creature.id}`} key={creature.id}>
-              <div className="transform transition-transform hover:scale-105">
-                <CreatureCard creature={creature} />
-              </div>
-            </Link>
-          ))}
-        </div>
+    <main className="px-6 flex flex-col gap-5 items-center justify-center min-h-screen py-10">
+      <h1 className="text-3xl font-bold">
+        Summon the Creature Behind Your Code
+      </h1>
 
-        {creatures.length === 0 && (
-          <div className="text-center py-20">
-            <p className="text-xl text-muted-foreground">No creatures yet. Be the first to summon one!</p>
-          </div>
-        )}
-      </div>
+      <Suspense>
+        <GithubForm />
+      </Suspense>
+
+      <Suspense fallback={<div className="text-muted-foreground">Loading creatures...</div>}>
+        <CreaturesShowcase />
+      </Suspense>
     </main>
   );
 }
