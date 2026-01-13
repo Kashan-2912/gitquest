@@ -19,7 +19,7 @@ const LatestCreatures = ({ creatures }: LatestCreaturesProps) => {
   }
 
   return (
-    <div className="flex flex-col gap-5 px-5 w-full max-w-2xl">
+    <div className="flex flex-col gap-5 px-5 w-full max-w-3xl">
       <h2 className="text-xl font-semibold">Latest Creatures</h2>
       <div className="flex flex-wrap w-full gap-y-2 gap-x-[1.25%]">
         {creatures.map((creature: SelectCreature) => (
