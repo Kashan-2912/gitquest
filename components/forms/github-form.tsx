@@ -7,23 +7,21 @@ import { toast } from "sonner";
 import * as z from "zod";
 
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-} from "@/components/ui/card";
-import {
-  Field,
-  FieldError,
-  FieldGroup,
-} from "@/components/ui/field";
+import { Card, CardContent } from "@/components/ui/card";
+import { Field, FieldError, FieldGroup } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { fetchGithubStats, submitGithubForm } from "@/server/ai";
+import { submitGithubForm } from "@/server/ai";
+import { useState } from "react";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { Loading03Icon } from "@hugeicons/core-free-icons";
+import { isRedirectError } from "next/dist/client/components/redirect-error";
 
 const formSchema = z.object({
   githubProfileUrl: z.string().startsWith("https://github.com/"),
 });
 
 export function GithubForm() {
+  const [loading, setLoading] = useState(false);
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -32,9 +30,20 @@ export function GithubForm() {
   });
 
   async function onSubmit(data: z.infer<typeof formSchema>) {
-    const stats = await submitGithubForm(data.githubProfileUrl);
-    console.log(stats)
-    toast.success("Github stats fetched successfully!");
+    try {
+      setLoading(true);
+      await submitGithubForm(data.githubProfileUrl);
+      toast.success("Github stats fetched successfully!");
+    } catch (error) {
+
+      if (isRedirectError(error)) {
+        throw error;
+      }
+      toast.error("Failed to fetch Github profile stats.");
+      console.error("Error fetching Github profile stats:", error);
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
@@ -55,8 +64,8 @@ export function GithubForm() {
                       placeholder="https://github.com/username"
                       autoComplete="off"
                     />
-                    <Button type="submit" form="form-rhf-demo">
-                      Submit
+                    <Button type="submit" form="form-rhf-demo" disabled={loading}>
+                      {loading ? <HugeiconsIcon className="animate-spin" icon={Loading03Icon} /> : "Submit"}
                     </Button>
                   </div>
 

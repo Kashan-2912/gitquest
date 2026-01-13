@@ -1,11 +1,6 @@
 import { SelectCreature } from "@/db/schema";
 
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import Image from "next/image";
 
 const CreatureCard = ({ creature }: { creature: SelectCreature }) => {
@@ -16,7 +11,8 @@ const CreatureCard = ({ creature }: { creature: SelectCreature }) => {
       </CardHeader>
       <CardContent className="flex flex-col items-center justify-center gap-5 mx-auto">
         <Image
-        className="w-full"
+          className="w-full"
+          loading="eager"
           src={creature.image}
           alt={creature.description}
           width={500}
