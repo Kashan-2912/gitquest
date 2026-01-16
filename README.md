@@ -140,8 +140,8 @@ This project is open source and available under the MIT License.
 
 ## 🔗 Links
 
-- [Live Demo](#https://gitquest.is-a.software/) <!-- Add your deployed URL here -->
-- [GitHub Repository](#https://github.com/Kashan-2912/gitquest) <!-- Add your repo URL here -->
+- [Live Demo](https://gitquest.is-a.software/) <!-- Add your deployed URL here -->
+- [GitHub Repository](https://github.com/Kashan-2912/gitquest) <!-- Add your repo URL here -->
 
 ## 🙏 Acknowledgments
 
