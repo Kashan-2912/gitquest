@@ -1,36 +1,156 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🐉 GitQuest
 
-## Getting Started
+**Summon the Creature Behind Your Code**
 
-First, run the development server:
+GitQuest transforms your GitHub profile into a unique fantasy creature based on your contribution history. Using AI-powered generation, your coding journey comes to life as a D&D-inspired monster with visual power that reflects your contributions.
+
+![GitQuest Banner](./public/github-creature-logo.png)
+
+## ✨ Features
+
+- **🎨 AI-Powered Creature Generation**: Leverages Google's Gemini AI to create unique fantasy creatures based on GitHub contribution data
+- **📊 Contribution-Based Tiers**: Creatures scale from CR 0 (harmless vermin) to CR 20+ (legendary beings) based on contribution count
+- **🏆 Leaderboard**: Compare your creatures with other developers
+- **👤 User Profiles**: View individual developer profiles and their summoned creatures
+- **🎲 Summoning System**: Discover what creature embodies your coding spirit
+- **🎭 Beautiful 3D Effects**: Interactive cards with liquid chrome, plasma, and light pillar effects
+- **🌓 Dark/Light Mode**: Full theme support with next-themes
+
+## 🛠️ Tech Stack
+
+- **Framework**: [Next.js 16](https://nextjs.org) with App Router
+- **Language**: TypeScript
+- **Styling**: Tailwind CSS 4
+- **Database**: Neon PostgreSQL with [Drizzle ORM](https://orm.drizzle.team)
+- **AI**: Google Gemini 2.5 Flash Image
+- **Storage**: Vercel Blob for creature images
+- **3D Graphics**: Three.js & OGL
+- **UI Components**: Custom components built with Radix UI primitives
+- **Forms**: React Hook Form with Zod validation
+- **State Management**: nuqs for URL state
+
+## 🚀 Getting Started
+
+### Prerequisites
+
+- Node.js 20+ installed
+- A GitHub account
+- API keys for:
+  - Google Gemini AI (`GEMINI_API`)
+  - Neon PostgreSQL (`DATABASE_URL`)
+  - Vercel Blob Storage (`BLOB_READ_WRITE_TOKEN`)
+
+### Installation
+
+1. Clone the repository:
+
+```bash
+git clone https://github.com/yourusername/gitquest.git
+cd gitquest
+```
+
+2. Install dependencies:
+
+```bash
+npm install
+```
+
+3. Set up environment variables:
+
+Create a `.env.local` file in the root directory:
+
+```env
+GEMINI_API=your_gemini_api_key
+DATABASE_URL=your_neon_database_url
+BLOB_READ_WRITE_TOKEN=your_vercel_blob_token
+```
+
+4. Set up the database:
+
+```bash
+npx drizzle-kit push
+```
+
+5. Run the development server:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+6. Open [http://localhost:3000](http://localhost:3000) in your browser
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 📁 Project Structure
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```
+gitquest/
+├── app/                      # Next.js app directory
+│   ├── [username]/          # Dynamic user profile pages
+│   ├── leaderboard/         # Leaderboard page
+│   ├── summon/              # Creature summoning page
+│   └── page.tsx             # Home page
+├── components/              # React components
+│   ├── forms/               # GitHub form components
+│   ├── ui/                  # Reusable UI components
+│   ├── creature-card.tsx    # Creature display card
+│   ├── creatures-showcase.tsx
+│   └── ...                  # 3D effects and visual components
+├── db/                      # Database configuration
+│   ├── schema.ts            # Drizzle ORM schema
+│   └── drizzle.ts           # Database client
+├── server/                  # Server actions
+│   ├── ai.ts                # AI generation logic
+│   └── creatures.ts         # Creature data operations
+└── lib/                     # Utility functions
+```
 
-## Learn More
+## 🎮 How It Works
 
-To learn more about Next.js, take a look at the following resources:
+1. **Enter a GitHub username**: Submit any GitHub profile URL or username
+2. **Fetch Contributions**: The app queries the GitHub API for contribution count
+3. **AI Generation**: Google Gemini generates a unique D&D-inspired creature based on:
+   - Contribution count (determines Challenge Rating)
+   - Randomized selection from Monster Manual creatures
+   - Unique visual styling and effects
+4. **Storage**: Creature image is stored in Vercel Blob and metadata in Neon database
+5. **Display**: View your creature with beautiful 3D effects and share with others
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## 🎯 Contribution Tiers
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- **0-49 contributions**: CR 0 (Harmless/Vermin-tier)
+- **50-150**: CR 1/8–1/4 (Minor threats)
+- **151-400**: CR 1/2–1 (Novice adventurer)
+- **401-800**: CR 2–4 (Competent)
+- **801-1500**: CR 5–8 (Skilled)
+- **1501-3000**: CR 9–13 (Veteran)
+- **3001-6000**: CR 14–17 (Elite)
+- **6001+**: CR 18–20+ (Legendary)
 
-## Deploy on Vercel
+## 🤝 Contributing
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Contributions are welcome! Feel free to:
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- Report bugs
+- Suggest new features
+- Submit pull requests
+- Improve documentation
+
+## 📜 License
+
+This project is open source and available under the MIT License.
+
+## 🔗 Links
+
+- [Live Demo](#) <!-- Add your deployed URL here -->
+- [GitHub Repository](#) <!-- Add your repo URL here -->
+
+## 🙏 Acknowledgments
+
+- D&D 5e Monster Manual for creature inspiration
+- Next.js team for the amazing framework
+- Google for Gemini AI
+- Vercel for hosting and blob storage
+- Neon for serverless PostgreSQL
+
+---
+
+**Built with ❤️ for the developer community**
