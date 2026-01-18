@@ -16,6 +16,9 @@ GitQuest transforms your GitHub profile into a unique fantasy creature based on 
 - **🎭 Beautiful 3D Effects**: Interactive cards with liquid chrome, plasma, and light pillar effects
 - **🌓 Dark/Light Mode**: Full theme support with next-themes
 
+- ## ✨ TO BE Features
+- **🎨 Leaderboard**: Leverages database and shows leaderboard rankings based on best creature / criterial from profile.
+
 ## 🛠️ Tech Stack
 
 - **Framework**: [Next.js 16](https://nextjs.org) with App Router
