@@ -173,20 +173,36 @@ export default function LeaderboardTable({ creatures }: LeaderboardTableProps) {
           const isTopThree = rank <= 3;
 
           return (
-            <Link
-              key={creature.id}
-              href={`/${username}`}
-              className={cn(
-                "block lg:grid lg:grid-cols-[60px_1fr_1fr_120px_100px] gap-4 px-4 py-4 transition-all duration-200",
-                "hover:bg-white/5 group cursor-pointer",
-                isTopThree && "bg-linear-to-r from-white/2 to-transparent"
+            <div key={creature.id} className={cn("relative", isTopThree && "fire-border-wrapper")}>
+              {isTopThree && (
+                <>
+                  <div className={cn(
+                    "absolute inset-0 fire-border-animated pointer-events-none",
+                    rank === 1 && "fire-border-top",
+                    rank === 2 && "fire-border-sides",
+                    rank === 3 && "fire-border-bottom"
+                  )} />
+                </>
               )}
-            >
+              <Link
+                href={`/${username}`}
+                className={cn(
+                  "block lg:grid lg:grid-cols-[60px_1fr_1fr_120px_100px] gap-4 px-4 py-4 transition-all duration-200 relative z-10",
+                  "hover:bg-white/5 group cursor-pointer"
+                )}
+              >
               {/* Mobile Layout */}
               <div className="lg:hidden flex items-start gap-3">
                 {/* Rank + Avatar */}
                 <div className="flex items-center gap-3 shrink-0">
-                  {getRankBadge(rank)}
+                  <div className="relative">
+                    {getRankBadge(rank)}
+                    {isTopThree && (
+                      <div className="absolute -top-1 -right-1 animate-bounce">
+                        <HugeiconsIcon icon={Flame} className="h-4 w-4 text-orange-400 drop-shadow-[0_0_8px_rgba(251,146,60,0.8)]" />
+                      </div>
+                    )}
+                  </div>
                   <div className="relative w-12 h-12 rounded-full overflow-hidden border-2 border-white/10">
                     <Image
                       src={creature.image}
@@ -236,7 +252,14 @@ export default function LeaderboardTable({ creatures }: LeaderboardTableProps) {
               <div className="hidden lg:contents">
                 {/* Rank */}
                 <div className="flex items-center justify-center">
-                  {getRankBadge(rank)}
+                  <div className="relative">
+                    {getRankBadge(rank)}
+                    {isTopThree && (
+                      <div className="absolute -top-1 -right-1 animate-bounce">
+                        <HugeiconsIcon icon={Flame} className="h-4 w-4 text-orange-400 drop-shadow-[0_0_8px_rgba(251,146,60,0.8)]" />
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 {/* Summoner */}
@@ -295,9 +318,109 @@ export default function LeaderboardTable({ creatures }: LeaderboardTableProps) {
                 </div>
               </div>
             </Link>
+            </div>
           );
         })}
       </div>
+
+      <style jsx global>{`
+        @keyframes fire-flicker {
+          0%, 100% {
+            filter: brightness(1) drop-shadow(0 0 3px rgba(251, 146, 60, 0.6));
+          }
+          25% {
+            filter: brightness(1.1) drop-shadow(0 0 5px rgba(251, 146, 60, 0.7));
+          }
+          50% {
+            filter: brightness(1.2) drop-shadow(0 0 6px rgba(239, 68, 68, 0.7));
+          }
+          75% {
+            filter: brightness(1.1) drop-shadow(0 0 5px rgba(251, 146, 60, 0.7));
+          }
+        }
+
+        @keyframes border-flow {
+          0% {
+            background-position: 0% 50%;
+          }
+          100% {
+            background-position: 200% 50%;
+          }
+        }
+
+        .fire-border-animated {
+          animation: fire-flicker 2s ease-in-out infinite;
+        }
+
+        .fire-border-top {
+          border-top: 2px solid transparent;
+          border-left: 2px solid transparent;
+          border-right: 2px solid transparent;
+          background: linear-gradient(white, white) padding-box,
+            linear-gradient(
+              90deg,
+              rgba(251, 146, 60, 0.8) 0%,
+              rgba(249, 115, 22, 0.9) 25%,
+              rgba(239, 68, 68, 0.9) 50%,
+              rgba(249, 115, 22, 0.9) 75%,
+              rgba(251, 146, 60, 0.8) 100%
+            ) border-box;
+          background-size: 200% 100%;
+          animation: fire-flicker 2s ease-in-out infinite, border-flow 3s linear infinite;
+          -webkit-mask: 
+            linear-gradient(#fff 0 0) padding-box, 
+            linear-gradient(#fff 0 0);
+          -webkit-mask-composite: xor;
+          mask-composite: exclude;
+        }
+
+        .fire-border-sides {
+          border-left: 2px solid transparent;
+          border-right: 2px solid transparent;
+          background: linear-gradient(white, white) padding-box,
+            linear-gradient(
+              90deg,
+              rgba(251, 146, 60, 0.8) 0%,
+              rgba(249, 115, 22, 0.9) 25%,
+              rgba(239, 68, 68, 0.9) 50%,
+              rgba(249, 115, 22, 0.9) 75%,
+              rgba(251, 146, 60, 0.8) 100%
+            ) border-box;
+          background-size: 200% 100%;
+          animation: fire-flicker 2s ease-in-out infinite, border-flow 3s linear infinite;
+          -webkit-mask: 
+            linear-gradient(#fff 0 0) padding-box, 
+            linear-gradient(#fff 0 0);
+          -webkit-mask-composite: xor;
+          mask-composite: exclude;
+        }
+
+        .fire-border-bottom {
+          border-bottom: 2px solid transparent;
+          border-left: 2px solid transparent;
+          border-right: 2px solid transparent;
+          background: linear-gradient(white, white) padding-box,
+            linear-gradient(
+              90deg,
+              rgba(251, 146, 60, 0.8) 0%,
+              rgba(249, 115, 22, 0.9) 25%,
+              rgba(239, 68, 68, 0.9) 50%,
+              rgba(249, 115, 22, 0.9) 75%,
+              rgba(251, 146, 60, 0.8) 100%
+            ) border-box;
+          background-size: 200% 100%;
+          animation: fire-flicker 2s ease-in-out infinite, border-flow 3s linear infinite;
+          -webkit-mask: 
+            linear-gradient(#fff 0 0) padding-box, 
+            linear-gradient(#fff 0 0);
+          -webkit-mask-composite: xor;
+          mask-composite: exclude;
+        }
+
+        .fire-border-wrapper {
+          border-radius: 0;
+        }
+      `}</style>
     </div>
   );
 }
