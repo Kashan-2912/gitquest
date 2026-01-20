@@ -1,6 +1,6 @@
 import { db } from "@/db/drizzle";
 import { creatures, InsertCreature } from "@/db/schema";
-import { count, desc, gt } from "drizzle-orm";
+import { count, gt } from "drizzle-orm";
 
 export async function saveCreature(creature: InsertCreature) {
   try {
@@ -85,5 +85,30 @@ export async function getCreatureByGithubUsername(githubUsername: string) {
   } catch (error) {
     console.error(error);
     throw new Error("Failed to get creature");
+  }
+}
+
+export async function getLeaderboardCreatures(limit: number = 50) {
+  try {
+    const leaderboard = await db.query.creatures.findMany({
+      orderBy: (creatures, { desc }) => desc(creatures.contributions),
+      limit,
+    });
+    return leaderboard;
+  } catch (error) {
+    console.error("Error in getLeaderboardCreatures:", error);
+    throw error;
+  }
+}
+
+export async function getTotalCreaturesCount() {
+  try {
+    const [{ count: totalCount }] = await db
+      .select({ count: count() })
+      .from(creatures);
+    return Number(totalCount ?? 0);
+  } catch (error) {
+    console.error("Error in getTotalCreaturesCount:", error);
+    throw error;
   }
 }
