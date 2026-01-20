@@ -3,6 +3,7 @@ import { getLeaderboardCreatures, getTotalCreaturesCount } from "@/server/creatu
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Flame, Trophy } from "@hugeicons/core-free-icons";
 import LeaderboardTable from "@/components/leaderboard-table";
+import Card from "@/components/card";
 
 async function LeaderboardContent() {
   const [creatures, totalCount] = await Promise.all([
@@ -90,27 +91,20 @@ export default function LeaderboardPage() {
   return (
     <main className="min-h-screen px-4 sm:px-6 py-12 dark mt-10">
       <div className="max-w-5xl mx-auto">
-        {/* Header */}
-        <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-linear-to-br from-neutral-900/80 via-neutral-900 to-neutral-950 shadow-2xl mb-8">
-          <div
-            className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(16,185,129,0.12),transparent_35%),radial-gradient(circle_at_20%_60%,rgba(59,130,246,0.12),transparent_35%),radial-gradient(circle_at_80%_40%,rgba(236,72,153,0.12),transparent_30%)]"
-            aria-hidden
-          />
-          <div className="relative px-6 sm:px-8 py-10 sm:py-14 text-center space-y-4">
-            <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-1.5 text-sm font-medium text-white/70">
-              <HugeiconsIcon icon={Trophy} className="h-4 w-4 text-amber-400" />
-              Hall of Fame
-            </div>
-            <h1 className="text-3xl sm:text-5xl font-bold text-white">Leaderboard</h1>
-            <p className="text-base sm:text-lg text-white/70 max-w-2xl mx-auto">
-              The most legendary GitHub creatures, ranked by their summoner&apos;s contribution power.
-            </p>
-            <div className="flex items-center justify-center gap-3 text-sm text-white/60">
-              <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" aria-hidden />
-              <span>Rankings update in real-time as new creatures are summoned</span>
-            </div>
-          </div>
-        </div>
+        <Card
+          className="mb-8"
+          fullWidth
+          eyebrow="Hall of Fame"
+          eyebrowIcon={<HugeiconsIcon icon={Trophy} className="h-4 w-4 text-amber-300" />}
+          title="Leaderboard"
+          subtitle="The most legendary GitHub creatures, ranked by their summoner's contribution power."
+          items={[
+            "Rankings update in real-time as new creatures are summoned",
+            "Top 50 creatures highlighted with live contribution stats",
+            "Summoners gain perks as their creatures climb the board",
+            "Exclusive Hall of Fame badge for season leaders",
+          ]}
+        />
 
         {/* Content */}
         <Suspense fallback={<LeaderboardSkeleton />}>
