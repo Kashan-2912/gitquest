@@ -6,6 +6,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "sonner";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
 import { Footer } from "@/components/footer";
+import { SpeedInsights } from "@vercel/speed-insights/next"
 
 const notoSans = Noto_Sans({ variable: "--font-sans" });
 
@@ -43,6 +44,7 @@ export default function RootLayout({
           >
             <Header />
             {children}
+            <SpeedInsights />
             <Footer />
             <Toaster />
           </ThemeProvider>
