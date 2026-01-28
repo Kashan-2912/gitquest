@@ -71,13 +71,31 @@ async function CreaturePreview({ username }: { username: string }) {
   );
 }
 
-export default async function WidgetPage({
+async function WidgetContent({ searchParams }: { searchParams: SearchParams }) {
+  const { username } = await searchParams;
+
+  return (
+    <>
+      {/* Username Input Form */}
+      <div className="flex justify-center mb-10">
+        <WidgetForm initialUsername={username} />
+      </div>
+
+      {/* Creature Preview */}
+      {username && (
+        <Suspense fallback={<Skeleton className="h-96 w-72 mx-auto" />}>
+          <CreaturePreview username={username} />
+        </Suspense>
+      )}
+    </>
+  );
+}
+
+export default function WidgetPage({
   searchParams,
 }: {
   searchParams: SearchParams;
 }) {
-  const { username } = await searchParams;
-
   return (
     <main className="min-h-screen py-20 px-6">
       <div className="max-w-4xl mx-auto">
@@ -88,19 +106,9 @@ export default async function WidgetPage({
           </p>
         </div>
 
-        {/* Username Input Form */}
-        <div className="flex justify-center mb-10">
-          <Suspense fallback={<Skeleton className="h-10 w-80" />}>
-            <WidgetForm initialUsername={username} />
-          </Suspense>
-        </div>
-
-        {/* Creature Preview */}
-        {username && (
-          <Suspense fallback={<Skeleton className="h-96 w-72 mx-auto" />}>
-            <CreaturePreview username={username} />
-          </Suspense>
-        )}
+        <Suspense fallback={<Skeleton className="h-10 w-80 mx-auto" />}>
+          <WidgetContent searchParams={searchParams} />
+        </Suspense>
 
         {/* Instructions */}
         <div className="mt-12 space-y-6 max-w-2xl mx-auto">
