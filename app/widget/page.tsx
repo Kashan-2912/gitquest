@@ -1,16 +1,85 @@
 import { Suspense } from "react";
 import { Metadata } from "next";
 import Link from "next/link";
-import { WidgetGenerator } from "./widget-generator";
+import { headers } from "next/headers";
+import { connection } from "next/server";
+import CreatureCard from "@/components/creature-card";
+import { Skeleton } from "@/components/ui/skeleton";
+import { getCreatureByGithubUsername } from "@/server/creatures";
+import { WidgetForm } from "./widget-form";
 
 export const metadata: Metadata = {
   title: "GitHub README Widget - GitQuest",
-  description: "Add your GitQuest creature to your GitHub profile README with an embeddable widget.",
+  description:
+    "Add your GitQuest creature to your GitHub profile README with an embeddable widget.",
 };
 
-export default function WidgetPage() {
+type SearchParams = Promise<{ username?: string }>;
+
+async function CreaturePreview({ username }: { username: string }) {
+  const creature = await getCreatureByGithubUsername(username);
+
+  if (!creature) {
+    return (
+      <div className="text-center p-8 bg-muted/30 rounded-lg">
+        <p className="text-muted-foreground">
+          No creature found for <span className="font-bold">@{username}</span>
+        </p>
+        <Link href="/summon" className="text-primary hover:underline mt-2 block">
+          Summon your creature first →
+        </Link>
+      </div>
+    );
+  }
+
+  // Touch request-scoped data to allow dynamic randomness
+  headers();
+  await connection();
+
+  const rand = () => (crypto.getRandomValues(new Uint32Array(1))[0] % 9) + 2;
+  const cardTheme = rand();
+  const cardEmblemTheme = rand();
+
+  const baseUrl = "https://gitquest.is-a.software";
+  const widgetImageUrl = `${baseUrl}/api/widget/${username}`;
+  const profileUrl = `${baseUrl}/${username}`;
+  const markdownCode = `[![My GitQuest Creature](${widgetImageUrl})](${profileUrl})`;
+
   return (
-    <main className="min-h-screen py-10 px-6">
+    <div className="flex flex-col items-center gap-8">
+      {/* Creature Card Preview */}
+      <CreatureCard
+        username={username}
+        stats={true}
+        cardTheme={cardTheme}
+        cardEmblemTheme={cardEmblemTheme}
+      />
+
+      {/* Markdown Code for GitHub README */}
+      <div className="w-full max-w-xl space-y-3">
+        <h3 className="font-semibold text-lg">📋 Copy this to your GitHub README:</h3>
+        <div className="relative">
+          <pre className="p-4 bg-muted rounded-lg overflow-x-auto text-sm border">
+            <code>{markdownCode}</code>
+          </pre>
+        </div>
+        <p className="text-sm text-muted-foreground">
+          This will show your creature image and link to your GitQuest profile when clicked.
+        </p>
+      </div>
+    </div>
+  );
+}
+
+export default async function WidgetPage({
+  searchParams,
+}: {
+  searchParams: SearchParams;
+}) {
+  const { username } = await searchParams;
+
+  return (
+    <main className="min-h-screen py-20 px-6">
       <div className="max-w-4xl mx-auto">
         <div className="text-center mb-10">
           <h1 className="text-3xl font-bold mb-3">🐉 GitHub README Widget</h1>
@@ -19,91 +88,38 @@ export default function WidgetPage() {
           </p>
         </div>
 
-        <Suspense fallback={<div className="text-center text-muted-foreground">Loading...</div>}>
-          <WidgetGenerator />
-        </Suspense>
+        {/* Username Input Form */}
+        <div className="flex justify-center mb-10">
+          <Suspense fallback={<Skeleton className="h-10 w-80" />}>
+            <WidgetForm initialUsername={username} />
+          </Suspense>
+        </div>
 
-        {/* Instructions Section */}
-        <div className="mt-12 space-y-8">
+        {/* Creature Preview */}
+        {username && (
+          <Suspense fallback={<Skeleton className="h-96 w-72 mx-auto" />}>
+            <CreaturePreview username={username} />
+          </Suspense>
+        )}
+
+        {/* Instructions */}
+        <div className="mt-12 space-y-6 max-w-2xl mx-auto">
           <section>
-            <h2 className="text-2xl font-semibold mb-4">📝 How to Add to Your GitHub Profile</h2>
-            <ol className="list-decimal list-inside space-y-3 text-muted-foreground">
+            <h2 className="text-xl font-semibold mb-3">📝 How to Add to Your GitHub Profile</h2>
+            <ol className="list-decimal list-inside space-y-2 text-muted-foreground">
               <li>
-                First, make sure you have <Link href="/summon" className="text-primary hover:underline">summoned your creature</Link>
+                First,{" "}
+                <Link href="/summon" className="text-primary hover:underline">
+                  summon your creature
+                </Link>
               </li>
+              <li>Create a repository with the same name as your GitHub username</li>
               <li>
-                Create a repository with the same name as your GitHub username (if you haven&apos;t already)
+                Add or edit the <code className="bg-muted px-1.5 py-0.5 rounded text-sm">README.md</code> file
               </li>
-              <li>
-                Add or edit the <code className="bg-muted px-2 py-1 rounded text-sm">README.md</code> file in that repository
-              </li>
-              <li>
-                Copy the Markdown code above and paste it into your README
-              </li>
-              <li>
-                Commit and push — your creature will now appear on your profile!
-              </li>
+              <li>Paste the markdown code above</li>
+              <li>Commit and push — your creature will appear on your profile!</li>
             </ol>
-          </section>
-
-          <section>
-            <h2 className="text-2xl font-semibold mb-4">✨ Widget Features</h2>
-            <ul className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <li className="flex items-start gap-3 p-4 rounded-lg bg-muted/50">
-                <span className="text-2xl">🎨</span>
-                <div>
-                  <h3 className="font-medium">Dynamic Theming</h3>
-                  <p className="text-sm text-muted-foreground">Colors adapt to your creature&apos;s power tier</p>
-                </div>
-              </li>
-              <li className="flex items-start gap-3 p-4 rounded-lg bg-muted/50">
-                <span className="text-2xl">📊</span>
-                <div>
-                  <h3 className="font-medium">Live Stats</h3>
-                  <p className="text-sm text-muted-foreground">Shows contributions, CR, and power level</p>
-                </div>
-              </li>
-              <li className="flex items-start gap-3 p-4 rounded-lg bg-muted/50">
-                <span className="text-2xl">🖼️</span>
-                <div>
-                  <h3 className="font-medium">Creature Portrait</h3>
-                  <p className="text-sm text-muted-foreground">Displays your unique AI-generated creature</p>
-                </div>
-              </li>
-              <li className="flex items-start gap-3 p-4 rounded-lg bg-muted/50">
-                <span className="text-2xl">⚡</span>
-                <div>
-                  <h3 className="font-medium">Auto-Updates</h3>
-                  <p className="text-sm text-muted-foreground">Widget refreshes when you re-summon</p>
-                </div>
-              </li>
-            </ul>
-          </section>
-
-          <section>
-            <h2 className="text-2xl font-semibold mb-4">🏆 Power Tiers</h2>
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-2 text-sm">
-              {[
-                { tier: "Mythic", color: "bg-purple-500", contributions: "5001+" },
-                { tier: "Legendary", color: "bg-gray-400", contributions: "4001-5000" },
-                { tier: "Epic", color: "bg-amber-500", contributions: "2501-4000" },
-                { tier: "Heroic", color: "bg-blue-500", contributions: "1501-2500" },
-                { tier: "Dangerous", color: "bg-red-500", contributions: "751-1500" },
-                { tier: "Formidable", color: "bg-orange-500", contributions: "301-750" },
-                { tier: "Trained", color: "bg-green-500", contributions: "151-300" },
-                { tier: "Minor", color: "bg-teal-500", contributions: "50-150" },
-                { tier: "Harmless", color: "bg-slate-500", contributions: "1-49" },
-                { tier: "Unknown", color: "bg-gray-500", contributions: "0" },
-              ].map(({ tier, color, contributions }) => (
-                <div key={tier} className="flex items-center gap-2 p-2 rounded bg-muted/30">
-                  <div className={`w-3 h-3 rounded-full ${color}`} />
-                  <div>
-                    <div className="font-medium">{tier}</div>
-                    <div className="text-xs text-muted-foreground">{contributions}</div>
-                  </div>
-                </div>
-              ))}
-            </div>
           </section>
         </div>
       </div>
