@@ -4,7 +4,7 @@
 
 <br/>
 
-<img src="https://gitquest.is-a.software/api/tagline" alt="Summon the creature behind your code" />
+<img src="https://gitquest.is-a.software/api/tagline?v=3" alt="Summon the creature behind your code" />
 
 <br/>
 
