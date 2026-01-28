@@ -97,8 +97,11 @@ export async function GET(request: NextRequest, { params }: Params) {
     const imageBase64 = await fetchImageAsBase64(creature.image);
 
     // Animated SVG with glowing effects and embedded image
+    const profileUrl = `https://gitquest.is-a.software/${username}`;
+    
     const animatedSvg = `
 <svg width="400" height="560" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+  <a href="${profileUrl}" target="_blank" rel="noopener noreferrer">
   <defs>
     <!-- Background gradient -->
     <linearGradient id="cardBg" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -240,6 +243,7 @@ export async function GET(request: NextRequest, { params }: Params) {
     <animate attributeName="cy" values="320;290;320" dur="4.5s" repeatCount="indefinite"/>
     <animate attributeName="opacity" values="0.4;0.1;0.4" dur="4.5s" repeatCount="indefinite"/>
   </circle>
+  </a>
 </svg>`;
 
     return new NextResponse(animatedSvg.trim(), {
