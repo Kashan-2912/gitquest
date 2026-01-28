@@ -49,6 +49,19 @@ function extractCR(description: string): string {
   return match ? match[1] : "?";
 }
 
+async function fetchImageAsBase64(imageUrl: string): Promise<string | null> {
+  try {
+    const response = await fetch(imageUrl);
+    const arrayBuffer = await response.arrayBuffer();
+    const base64 = Buffer.from(arrayBuffer).toString('base64');
+    const contentType = response.headers.get('content-type') || 'image/png';
+    return `data:${contentType};base64,${base64}`;
+  } catch (error) {
+    console.error("Failed to fetch image:", error);
+    return null;
+  }
+}
+
 export async function GET(request: NextRequest, { params }: Params) {
   try {
     const { username } = await params;
@@ -79,8 +92,11 @@ export async function GET(request: NextRequest, { params }: Params) {
     const tier = getTierInfo(powerLevel);
     const creatureName = extractCreatureName(creature.description);
     const cr = extractCR(creature.description);
+    
+    // Fetch image and convert to base64 (GitHub blocks external images in SVGs)
+    const imageBase64 = await fetchImageAsBase64(creature.image);
 
-    // Animated SVG with glowing effects
+    // Animated SVG with glowing effects and embedded image
     const animatedSvg = `
 <svg width="400" height="560" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
   <defs>
@@ -105,26 +121,35 @@ export async function GET(request: NextRequest, { params }: Params) {
     </linearGradient>
     
     <!-- Shimmer effect -->
-    <linearGradient id="shimmer" x1="0%" y1="0%" x2="100%" y2="100%">
+    <linearGradient id="shimmer" x1="-100%" y1="0%" x2="200%" y2="0%">
       <stop offset="0%" style="stop-color:rgba(255,255,255,0)"/>
-      <stop offset="50%" style="stop-color:rgba(255,255,255,0.1)"/>
+      <stop offset="50%" style="stop-color:rgba(255,255,255,0.15)"/>
       <stop offset="100%" style="stop-color:rgba(255,255,255,0)"/>
-      <animateTransform attributeName="gradientTransform" type="translate" from="-1 -1" to="1 1" dur="3s" repeatCount="indefinite"/>
+      <animate attributeName="x1" values="-100%;100%" dur="3s" repeatCount="indefinite"/>
+      <animate attributeName="x2" values="0%;200%" dur="3s" repeatCount="indefinite"/>
     </linearGradient>
     
     <!-- Glow filter -->
     <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
-      <feGaussianBlur stdDeviation="4" result="blur"/>
+      <feGaussianBlur stdDeviation="3" result="blur"/>
       <feMerge>
-        <feMergeNode in="blur"/>
         <feMergeNode in="blur"/>
         <feMergeNode in="SourceGraphic"/>
       </feMerge>
     </filter>
     
-    <!-- Pulse filter -->
+    <!-- Soft glow for text -->
+    <filter id="softGlow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="1" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    
+    <!-- Pulse filter for border -->
     <filter id="pulse" x="-50%" y="-50%" width="200%" height="200%">
-      <feGaussianBlur stdDeviation="3" result="blur">
+      <feGaussianBlur stdDeviation="4" result="blur">
         <animate attributeName="stdDeviation" values="3;6;3" dur="2s" repeatCount="indefinite"/>
       </feGaussianBlur>
       <feMerge>
@@ -141,7 +166,7 @@ export async function GET(request: NextRequest, { params }: Params) {
   
   <!-- Outer glow border (animated) -->
   <rect x="2" y="2" width="396" height="556" rx="18" fill="none" stroke="url(#glowGradient)" stroke-width="3" filter="url(#pulse)">
-    <animate attributeName="stroke-opacity" values="0.6;1;0.6" dur="2s" repeatCount="indefinite"/>
+    <animate attributeName="stroke-opacity" values="0.5;0.9;0.5" dur="2s" repeatCount="indefinite"/>
   </rect>
   
   <!-- Card background -->
@@ -156,32 +181,32 @@ export async function GET(request: NextRequest, { params }: Params) {
     <text x="200" y="41" font-family="system-ui, -apple-system, sans-serif" font-size="14" font-weight="600" fill="#000" text-anchor="middle">@${escapeXml(username)}</text>
   </g>
   
-  <!-- Creature image -->
-  <image x="20" y="60" width="360" height="320" xlink:href="${escapeXml(creature.image)}" clip-path="url(#imageClip)" preserveAspectRatio="xMidYMid slice"/>
+  <!-- Creature image (embedded as base64) -->
+  ${imageBase64 ? `<image x="20" y="60" width="360" height="320" href="${imageBase64}" clip-path="url(#imageClip)" preserveAspectRatio="xMidYMid slice"/>` : ''}
   
   <!-- Shimmer overlay on image -->
-  <rect x="20" y="60" width="360" height="320" rx="12" fill="url(#shimmer)" opacity="0.5">
-    <animate attributeName="opacity" values="0;0.5;0" dur="4s" repeatCount="indefinite"/>
-  </rect>
+  <rect x="20" y="60" width="360" height="320" rx="12" fill="url(#shimmer)" opacity="0.6"/>
   
   <!-- Image border glow -->
-  <rect x="20" y="60" width="360" height="320" rx="12" fill="none" stroke="${tier.color}" stroke-width="2" filter="url(#glow)"/>
+  <rect x="20" y="60" width="360" height="320" rx="12" fill="none" stroke="${tier.color}" stroke-width="2" filter="url(#glow)">
+    <animate attributeName="stroke-opacity" values="0.6;1;0.6" dur="2s" repeatCount="indefinite"/>
+  </rect>
   
   <!-- Bottom info section background -->
-  <rect x="20" y="390" width="360" height="150" rx="12" fill="${tier.color}" fill-opacity="0.15"/>
+  <rect x="20" y="390" width="360" height="150" rx="12" fill="${tier.color}" fill-opacity="0.1"/>
   
-  <!-- Creature name -->
-  <text x="200" y="425" font-family="system-ui, -apple-system, sans-serif" font-size="24" font-weight="bold" fill="#ffffff" text-anchor="middle" filter="url(#glow)">${escapeXml(creatureName.length > 20 ? creatureName.substring(0, 20) + '...' : creatureName)}</text>
+  <!-- Creature name (dimmed, no strong glow) -->
+  <text x="200" y="425" font-family="system-ui, -apple-system, sans-serif" font-size="22" font-weight="bold" fill="#e5e5e5" fill-opacity="0.9" text-anchor="middle" filter="url(#softGlow)">${escapeXml(creatureName.length > 22 ? creatureName.substring(0, 22) + '...' : creatureName)}</text>
   
   <!-- Tier and CR badges -->
   <g>
     <!-- Tier badge -->
-    <rect x="100" y="440" width="90" height="28" rx="6" fill="${tier.color}" fill-opacity="0.3"/>
-    <rect x="100" y="440" width="90" height="28" rx="6" fill="none" stroke="${tier.color}" stroke-width="1"/>
-    <text x="145" y="459" font-family="system-ui, sans-serif" font-size="12" font-weight="600" fill="${tier.color}" text-anchor="middle">${tier.name}</text>
+    <rect x="100" y="440" width="90" height="28" rx="6" fill="${tier.color}" fill-opacity="0.25"/>
+    <rect x="100" y="440" width="90" height="28" rx="6" fill="none" stroke="${tier.color}" stroke-width="1" stroke-opacity="0.6"/>
+    <text x="145" y="459" font-family="system-ui, sans-serif" font-size="12" font-weight="600" fill="${tier.color}" fill-opacity="0.9" text-anchor="middle">${tier.name}</text>
     
     <!-- CR badge -->
-    <rect x="210" y="440" width="90" height="28" rx="6" fill="#374151"/>
+    <rect x="210" y="440" width="90" height="28" rx="6" fill="#374151" fill-opacity="0.8"/>
     <text x="255" y="459" font-family="system-ui, sans-serif" font-size="12" fill="#9ca3af" text-anchor="middle">CR ${escapeXml(cr)}</text>
   </g>
   
@@ -190,26 +215,30 @@ export async function GET(request: NextRequest, { params }: Params) {
     <text x="200" y="490" font-family="system-ui, sans-serif" font-size="11" fill="#6b7280" text-anchor="middle">Power Level</text>
     <rect x="100" y="498" width="200" height="10" rx="5" fill="#374151"/>
     <rect x="100" y="498" width="${powerLevel * 20}" height="10" rx="5" fill="url(#glowGradient)">
-      <animate attributeName="opacity" values="0.8;1;0.8" dur="1.5s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0.7;1;0.7" dur="1.5s" repeatCount="indefinite"/>
     </rect>
-    <text x="200" y="525" font-family="system-ui, sans-serif" font-size="12" font-weight="bold" fill="${tier.color}" text-anchor="middle">${powerLevel}/10</text>
+    <text x="200" y="525" font-family="system-ui, sans-serif" font-size="12" font-weight="bold" fill="${tier.color}" fill-opacity="0.85" text-anchor="middle">${powerLevel}/10</text>
   </g>
   
   <!-- GitQuest branding -->
   <text x="200" y="548" font-family="system-ui, sans-serif" font-size="10" fill="#4b5563" text-anchor="middle">🐉 GitQuest</text>
   
   <!-- Floating particles effect -->
-  <circle cx="50" cy="100" r="2" fill="${tier.glowColor}" opacity="0.6">
-    <animate attributeName="cy" values="100;80;100" dur="4s" repeatCount="indefinite"/>
-    <animate attributeName="opacity" values="0.6;0.2;0.6" dur="4s" repeatCount="indefinite"/>
+  <circle cx="40" cy="100" r="2" fill="${tier.glowColor}" opacity="0.5">
+    <animate attributeName="cy" values="100;70;100" dur="4s" repeatCount="indefinite"/>
+    <animate attributeName="opacity" values="0.5;0.15;0.5" dur="4s" repeatCount="indefinite"/>
   </circle>
-  <circle cx="350" cy="150" r="1.5" fill="${tier.glowColor}" opacity="0.5">
-    <animate attributeName="cy" values="150;120;150" dur="3s" repeatCount="indefinite"/>
-    <animate attributeName="opacity" values="0.5;0.1;0.5" dur="3s" repeatCount="indefinite"/>
+  <circle cx="360" cy="140" r="1.5" fill="${tier.glowColor}" opacity="0.4">
+    <animate attributeName="cy" values="140;100;140" dur="3.5s" repeatCount="indefinite"/>
+    <animate attributeName="opacity" values="0.4;0.1;0.4" dur="3.5s" repeatCount="indefinite"/>
   </circle>
-  <circle cx="380" cy="300" r="2" fill="${tier.glowColor}" opacity="0.4">
-    <animate attributeName="cy" values="300;270;300" dur="5s" repeatCount="indefinite"/>
-    <animate attributeName="opacity" values="0.4;0.1;0.4" dur="5s" repeatCount="indefinite"/>
+  <circle cx="370" cy="280" r="2" fill="${tier.glowColor}" opacity="0.35">
+    <animate attributeName="cy" values="280;240;280" dur="5s" repeatCount="indefinite"/>
+    <animate attributeName="opacity" values="0.35;0.1;0.35" dur="5s" repeatCount="indefinite"/>
+  </circle>
+  <circle cx="30" cy="320" r="1.5" fill="${tier.glowColor}" opacity="0.4">
+    <animate attributeName="cy" values="320;290;320" dur="4.5s" repeatCount="indefinite"/>
+    <animate attributeName="opacity" values="0.4;0.1;0.4" dur="4.5s" repeatCount="indefinite"/>
   </circle>
 </svg>`;
 

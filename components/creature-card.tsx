@@ -258,7 +258,7 @@ export default async function CreatureCard({
   const cardDomId = `creature-card-${username}`;
 
   return (
-    <div className="flex flex-col items-center dark">
+    <div className="flex flex-col items-center dark mt-8">
       <div className="flex flex-col sm:flex-row items-start gap-4">
         <input id={toggleId} type="checkbox" className="peer sr-only" />
 

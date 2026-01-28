@@ -85,7 +85,7 @@ async function CreatureCardWrapper({ params }: { params: Params }) {
       />
       
       {/* Widget CTA */}
-      <div className="mt-4 p-4 rounded-lg bg-muted/50 border border-border text-center max-w-sm">
+      <div className="mt-0 p-4 rounded-lg bg-muted/50 border border-border text-center max-w-sm">
         <p className="text-sm text-muted-foreground mb-2">
           🐉 Add this creature to your GitHub profile!
         </p>
