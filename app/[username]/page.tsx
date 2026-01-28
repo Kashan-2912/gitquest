@@ -76,19 +76,34 @@ async function CreatureCardWrapper({ params }: { params: Params }) {
   const cardEmblemTheme = rand();
 
   return (
-    <CreatureCard
-      username={username}
-      stats={true}
-      cardTheme={cardTheme}
-      cardEmblemTheme={cardEmblemTheme}
-    />
+    <>
+      <CreatureCard
+        username={username}
+        stats={true}
+        cardTheme={cardTheme}
+        cardEmblemTheme={cardEmblemTheme}
+      />
+      
+      {/* Widget CTA */}
+      <div className="mt-4 p-4 rounded-lg bg-muted/50 border border-border text-center max-w-sm">
+        <p className="text-sm text-muted-foreground mb-2">
+          🐉 Add this creature to your GitHub profile!
+        </p>
+        <a
+          href={`/widget?username=${username}`}
+          className="text-sm text-primary hover:underline font-medium"
+        >
+          Get README Widget →
+        </a>
+      </div>
+    </>
   );
 }
 
-export default function CreaturePage({ params }: { params: Params }) {
+export default async function CreaturePage({ params }: { params: Params }) {
   noStore();
   return (
-    <main className="flex p-5 max-w-2xl mt-20 w-full mx-auto flex-col items-center justify-center gap-5 h-[90vh]">
+    <main className="flex p-5 max-w-2xl mt-20 w-full mx-auto flex-col items-center justify-center gap-5 min-h-[90vh]">
       <Suspense fallback={<Skeleton className="h-96 w-72" />}>
         <CreatureCardWrapper params={params} />
       </Suspense>

@@ -73,6 +73,12 @@ const Header = () => {
         >
           Leaderboard
         </Link>
+        <Link
+          href="/widget"
+          className="text-lg font-medium hover:text-primary transition-colors"
+        >
+          Widget
+        </Link>
         <ModeToggle />
       </nav>
     </header>

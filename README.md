@@ -15,6 +15,7 @@ GitQuest transforms your GitHub profile into a unique fantasy creature based on 
 - **🎲 Summoning System**: Discover what creature embodies your coding spirit
 - **🎭 Beautiful 3D Effects**: Interactive cards with liquid chrome, plasma, and light pillar effects
 - **🌓 Dark/Light Mode**: Full theme support with next-themes
+- **📛 GitHub README Widget**: Embeddable SVG widget to showcase your creature on your GitHub profile
 
 - ## ✨ TO BE Features
 - **🎨 Leaderboard**: Leverages database and shows leaderboard rankings based on best creature / criterial from profile.
@@ -127,6 +128,22 @@ gitquest/
 - **1501-3000**: CR 9–13 (Veteran)
 - **3001-6000**: CR 14–17 (Elite)
 - **6001+**: CR 18–20+ (Legendary)
+
+## 📛 GitHub README Widget
+
+Showcase your GitQuest creature on your GitHub profile! Add this to your README:
+
+```markdown
+[![GitQuest Creature](https://gitquest.is-a.software//api/widget/YOUR_USERNAME)](https://gitquest.is-a.software//YOUR_USERNAME)
+```
+
+Replace `YOUR_USERNAME` with your GitHub username. The widget automatically displays:
+- Your creature's portrait
+- Power tier and Challenge Rating
+- Contribution count
+- Dynamic color theming based on tier
+
+Visit [/widget](https://gitquest.is-a.software//widget) to generate your personalized embed code.
 
 ## 🤝 Contributing
 
