@@ -5,6 +5,7 @@ import { headers } from "next/headers";
 import { connection } from "next/server";
 import CreatureCard from "@/components/creature-card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { CopyButton } from "@/components/copy-button";
 import { getCreatureByGithubUsername } from "@/server/creatures";
 import { WidgetForm } from "./widget-form";
 
@@ -41,7 +42,7 @@ async function CreaturePreview({ username }: { username: string }) {
   const cardEmblemTheme = rand();
 
   const baseUrl = "https://gitquest.is-a.software";
-  const widgetImageUrl = `${baseUrl}/api/widget/${username}`;
+  const widgetImageUrl = `${baseUrl}/api/widget/${username}?v=5`;
   const profileUrl = `${baseUrl}/${username}`;
   const markdownCode = `[![My GitQuest Creature](${widgetImageUrl})](${profileUrl})`;
 
@@ -57,8 +58,14 @@ async function CreaturePreview({ username }: { username: string }) {
 
       {/* Markdown Code for GitHub README */}
       <div className="w-full max-w-xl space-y-3">
-        <h3 className="font-semibold text-lg">📋 Copy this to your GitHub README:</h3>
-        <div className="relative">
+        <div className="flex items-center justify-between">
+          <h3 className="font-semibold text-lg">📋 Copy this to your GitHub README:</h3>
+          <CopyButton 
+            text={markdownCode} 
+            label="Copy"
+          />
+        </div>
+        <div>
           <pre className="p-4 bg-muted rounded-lg overflow-x-auto text-sm border">
             <code>{markdownCode}</code>
           </pre>
