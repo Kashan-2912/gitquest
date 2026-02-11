@@ -174,3 +174,13 @@ This project is open source and available under the MIT License.
 ---
 
 **Built with ❤️ for the developer community**
+
+## Star History
+
+<a href="https://www.star-history.com/#Kashan-2912/gitquest&type=date&legend=top-left">
+ <picture>
+   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=Kashan-2912/gitquest&type=date&theme=dark&legend=top-left" />
+   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=Kashan-2912/gitquest&type=date&legend=top-left" />
+   <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=Kashan-2912/gitquest&type=date&legend=top-left" />
+ </picture>
+</a>
