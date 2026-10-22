@@ -15,18 +15,12 @@ export default function ShareOnXButton({
   text,
   className,
 }: ShareOnXButtonProps) {
-  const [shareUrl, setShareUrl] = React.useState("");
-
-  React.useEffect(() => {
-    setShareUrl(window.location.href);
-  }, []);
-
   const onClick = React.useCallback(() => {
     const intentUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(
       text
-    )}&url=${encodeURIComponent(shareUrl)}`;
+    )}&url=${encodeURIComponent(window.location.href)}`;
     window.open(intentUrl, "_blank", "noopener,noreferrer");
-  }, [shareUrl, text]);
+  }, [text]);
 
   return (
     <Button
@@ -34,7 +28,6 @@ export default function ShareOnXButton({
       size="sm"
       className={className}
       onClick={onClick}
-      disabled={!shareUrl}
     >
       <HugeiconsIcon icon={NewTwitterFreeIcons} />
     </Button>
