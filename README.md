@@ -2,6 +2,13 @@
 
 **Summon the Creature Behind Your Code**
 
+![CI](https://github.com/Kashan-2912/gitquest/actions/workflows/ci.yml/badge.svg)
+![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
+![Next.js](https://img.shields.io/badge/Next.js-16-black)
+![TypeScript](https://img.shields.io/badge/TypeScript-5-blue)
+
+**[Live Demo](https://gitquest.is-a.software)** · **[Roadmap](ROADMAP.md)** · **[Contributing](CONTRIBUTING.md)**
+
 GitQuest transforms your GitHub profile into a unique fantasy creature based on your contribution history. Using AI-powered generation, your coding journey comes to life as a D&D-inspired monster with visual power that reflects your contributions.
 
 ![GitQuest Banner](./public/github-creature-logo.png)
@@ -49,7 +56,7 @@ GitQuest transforms your GitHub profile into a unique fantasy creature based on 
 1. Clone the repository:
 
 ```bash
-git clone https://github.com/Kashan-2912/gitquest.git
+git clone https://github.com/yourusername/gitquest.git
 cd gitquest
 ```
 
