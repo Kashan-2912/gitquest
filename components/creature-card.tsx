@@ -1,4 +1,3 @@
-/* eslint-disable react-hooks/purity */
 
 import type { ReactNode } from "react";
 

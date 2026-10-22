@@ -1,4 +1,3 @@
-/* eslint-disable react-hooks/purity */
 
 import { unstable_noStore as noStore } from "next/cache";
 import { headers } from "next/headers";
