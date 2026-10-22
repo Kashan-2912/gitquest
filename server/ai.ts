@@ -9,25 +9,79 @@ const ai = new GoogleGenAI({
   apiKey: process.env.GEMINI_API!,
 });
 
+const USERNAME_PATTERN = /^[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?$/;
+
+function parseGithubUsername(githubProfileUrl: string) {
+  const cleaned = githubProfileUrl.trim().replace(/\/+$/, "");
+  const username = cleaned.split("/").pop() ?? "";
+  if (!USERNAME_PATTERN.test(username)) {
+    throw new Error(
+      "Invalid GitHub profile URL. Use https://github.com/<username>."
+    );
+  }
+  return username;
+}
+
 export async function fetchGithubStats(username: string) {
-  // const username = githubProfileUrl.split("/").pop();
   const response = await fetch(
-    `https://api.github.com/search/commits?q=author:${username}`
+    `https://api.github.com/search/commits?q=author:${username}`,
+    { headers: { Accept: "application/vnd.github+json" } }
   );
+  if (!response.ok) {
+    throw new Error(
+      response.status === 422 || response.status === 404
+        ? `GitHub user "${username}" was not found.`
+        : `GitHub stats request failed with status ${response.status}.`
+    );
+  }
   const data = await response.json();
-  console.log(data.total_count);
+  if (typeof data.total_count !== "number") {
+    throw new Error(`GitHub user "${username}" was not found.`);
+  }
   return data;
+}
+
+export async function fetchGithubProfile(username: string) {
+  // Followers and total stars feed the creature prompt rules below.
+  // Any failure here falls back to 0 so a summon never breaks on it.
+  try {
+    const [userRes, reposRes] = await Promise.all([
+      fetch(`https://api.github.com/users/${username}`, {
+        headers: { Accept: "application/vnd.github+json" },
+      }),
+      fetch(
+        `https://api.github.com/users/${username}/repos?per_page=100&type=owner`,
+        { headers: { Accept: "application/vnd.github+json" } }
+      ),
+    ]);
+    if (!userRes.ok || !reposRes.ok) return { followers: 0, stars: 0 };
+    const user = await userRes.json();
+    const repos = await reposRes.json();
+    const stars = Array.isArray(repos)
+      ? repos.reduce(
+          (sum, repo) => sum + (repo.stargazers_count ?? 0),
+          0 as number
+        )
+      : 0;
+    return { followers: user.followers ?? 0, stars };
+  } catch {
+    return { followers: 0, stars: 0 };
+  }
 }
 
 export async function generateCreatureImage(
   githubProfileUrl: string,
-  contributions: number
+  contributions: number,
+  followers: number = 0,
+  stars: number = 0
 ) {
   const response = await ai.models.generateContent({
     model: "gemini-2.5-flash-image",
     contents: `
       Github user: ${githubProfileUrl}
       Contributions: ${contributions}
+      Followers: ${followers}
+      Total stars across their own repos: ${stars}
 
       Generate a fantasy creature based on a GitHub user's contributions. Use the following rules:
 
@@ -103,57 +157,51 @@ export async function generateCreatureImage(
 }
 
 export async function submitGithubForm(githubProfileUrl: string) {
+  const username = parseGithubUsername(githubProfileUrl);
+  const canonicalUrl = `https://github.com/${username}`;
+
+  let savedUsername = username;
   try {
-    const username = githubProfileUrl.split("/").pop();
-    const stats = await fetchGithubStats(username!);
+    const stats = await fetchGithubStats(username);
+    const contributions = stats.total_count as number;
+    const { followers, stars } = await fetchGithubProfile(username);
     const image = await generateCreatureImage(
-      githubProfileUrl,
-      stats.total_count
+      canonicalUrl,
+      contributions,
+      followers,
+      stars
     );
 
-    const description = image.text;
+    const description =
+      image.text ?? "A fantasy creature summoned by GitQuest.";
 
-    if (
-      image.candidates &&
-      image.candidates[0] &&
-      image.candidates[0].content &&
-      image.candidates[0].content.parts
-    ) {
-      for (const part of image.candidates[0].content.parts) {
-        // description part
-        if (part.text) {
-            console.log("DESCRIPTION: ", description)
-
-          // img part
-        } else if (part.inlineData) {
-          const imageData = part.inlineData.data;
-          if (typeof imageData === "string") {
-            const buffer = Buffer.from(imageData, "base64");
-            const blob = await put(`img-${username}.png`, buffer, {
-              access: "public",
-            });
-
-            console.log(blob.url);
-
-            const creature = await saveCreature({
-                githubProfileUrl,
-                contributions: stats.total_count,
-                description: description!,
-                image: blob.url,
-            })
-
-            redirect(`/${creature.githubProfileUrl.split("/").pop()}`);
-
-          } else {
-            console.error("Image data is undefined or not a string.");
-          }
-        }
-      }
-    } else {
-      console.error("Invalid response structure from AI model.");
+    const parts = image.candidates?.[0]?.content?.parts;
+    if (!parts) {
+      throw new Error("The AI returned an invalid response. Please try again.");
     }
+
+    const imagePart = parts.find((part) => part.inlineData?.data);
+    if (!imagePart || typeof imagePart.inlineData?.data !== "string") {
+      throw new Error("The AI did not return an image. Please try again.");
+    }
+
+    const buffer = Buffer.from(imagePart.inlineData.data, "base64");
+    const blob = await put(`img-${username}.png`, buffer, {
+      access: "public",
+    });
+
+    const creature = await saveCreature({
+      githubProfileUrl: canonicalUrl,
+      contributions,
+      description,
+      image: blob.url,
+    });
+    savedUsername = creature.githubProfileUrl.split("/").pop() ?? username;
   } catch (error) {
     console.error("Error in submitGithubForm:", error);
     throw error;
   }
+
+  // Outside the try/catch so a successful summon is not logged as an error.
+  redirect(`/${savedUsername}`);
 }

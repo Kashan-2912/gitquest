@@ -17,9 +17,6 @@ GitQuest transforms your GitHub profile into a unique fantasy creature based on 
 - **🌓 Dark/Light Mode**: Full theme support with next-themes
 - **📛 GitHub README Widget**: Embeddable SVG widget to showcase your creature on your GitHub profile
 
-- ## ✨ TO BE Features
-- **🎨 Leaderboard**: Leverages database and shows leaderboard rankings based on best creature / criterial from profile.
-
 ## 🛠️ Tech Stack
 
 - **Framework**: [Next.js 16](https://nextjs.org) with App Router
@@ -29,7 +26,7 @@ GitQuest transforms your GitHub profile into a unique fantasy creature based on 
 - **AI**: Google Gemini 2.5 Flash Image
 - **Storage**: Vercel Blob for creature images
 - **3D Graphics**: Three.js & OGL
-- **UI Components**: Custom components built with Radix UI primitives
+- **UI Components**: Custom components built with Base UI primitives
 - **Forms**: React Hook Form with Zod validation
 - **State Management**: nuqs for URL state
 
@@ -49,7 +46,7 @@ GitQuest transforms your GitHub profile into a unique fantasy creature based on 
 1. Clone the repository:
 
 ```bash
-git clone https://github.com/Kashan-2912/gitquest.git
+git clone https://github.com/yourusername/gitquest.git
 cd gitquest
 ```
 
@@ -122,19 +119,20 @@ gitquest/
 
 - **0-49 contributions**: CR 0 (Harmless/Vermin-tier)
 - **50-150**: CR 1/8–1/4 (Minor threats)
-- **151-400**: CR 1/2–1 (Novice adventurer)
-- **401-800**: CR 2–4 (Competent)
-- **801-1500**: CR 5–8 (Skilled)
-- **1501-3000**: CR 9–13 (Veteran)
-- **3001-6000**: CR 14–17 (Elite)
-- **6001+**: CR 18–20+ (Legendary)
+- **151-300**: CR 1/2–1 (Novice adventurer)
+- **301-750**: CR 2–4 (Competent)
+- **751-1500**: CR 5–7 (Skilled)
+- **1501-2500**: CR 8–10 (Veteran)
+- **2501-4000**: CR 11–13 (Elite)
+- **4001-5000**: CR 14–17 (Legendary)
+- **5001+**: CR 18–30 (Mythic)
 
 ## 📛 GitHub README Widget
 
 Showcase your GitQuest creature on your GitHub profile! Add this to your README:
 
 ```markdown
-[![GitQuest Creature](https://gitquest.is-a.software//api/widget/YOUR_USERNAME)](https://gitquest.is-a.software//YOUR_USERNAME)
+[![GitQuest Creature](https://gitquest.is-a.software/api/widget/YOUR_USERNAME)](https://gitquest.is-a.software/YOUR_USERNAME)
 ```
 
 Replace `YOUR_USERNAME` with your GitHub username. The widget automatically displays:
@@ -143,7 +141,7 @@ Replace `YOUR_USERNAME` with your GitHub username. The widget automatically disp
 - Contribution count
 - Dynamic color theming based on tier
 
-Visit [/widget](https://gitquest.is-a.software//widget) to generate your personalized embed code.
+Visit [/widget](https://gitquest.is-a.software/widget) to generate your personalized embed code.
 
 ## 🤝 Contributing
 
