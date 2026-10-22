@@ -16,22 +16,36 @@ function parseGithubUsername(githubProfileUrl: string) {
   const username = cleaned.split("/").pop() ?? "";
   if (!USERNAME_PATTERN.test(username)) {
     throw new Error(
-      "Invalid GitHub profile URL. Use https://github.com/<username>."
+      "Invalid GitHub profile URL. Use https://github.com/<username>.",
     );
   }
   return username;
 }
 
+function githubHeaders() {
+  const headers: Record<string, string> = {
+    Accept: "application/vnd.github+json",
+  };
+  // Optional but recommended in production: unauthenticated GitHub API calls
+  // are limited to 60/hour per IP, and hosting platforms share IPs, so the
+  // limit is often already used up by strangers. Any token (no scopes needed
+  // for public data) raises the limit to 5,000/hour.
+  if (process.env.GITHUB_TOKEN) {
+    headers.Authorization = `Bearer ${process.env.GITHUB_TOKEN}`;
+  }
+  return headers;
+}
+
 export async function fetchGithubStats(username: string) {
   const response = await fetch(
     `https://api.github.com/search/commits?q=author:${username}`,
-    { headers: { Accept: "application/vnd.github+json" } }
+    { headers: githubHeaders() },
   );
   if (!response.ok) {
     throw new Error(
       response.status === 422 || response.status === 404
         ? `GitHub user "${username}" was not found.`
-        : `GitHub stats request failed with status ${response.status}.`
+        : `GitHub stats request failed with status ${response.status}.`,
     );
   }
   const data = await response.json();
@@ -47,11 +61,11 @@ export async function fetchGithubProfile(username: string) {
   try {
     const [userRes, reposRes] = await Promise.all([
       fetch(`https://api.github.com/users/${username}`, {
-        headers: { Accept: "application/vnd.github+json" },
+        headers: githubHeaders(),
       }),
       fetch(
         `https://api.github.com/users/${username}/repos?per_page=100&type=owner`,
-        { headers: { Accept: "application/vnd.github+json" } }
+        { headers: githubHeaders() },
       ),
     ]);
     if (!userRes.ok || !reposRes.ok) return { followers: 0, stars: 0 };
@@ -60,7 +74,7 @@ export async function fetchGithubProfile(username: string) {
     const stars = Array.isArray(repos)
       ? repos.reduce(
           (sum, repo) => sum + (repo.stargazers_count ?? 0),
-          0 as number
+          0 as number,
         )
       : 0;
     return { followers: user.followers ?? 0, stars };
@@ -97,7 +111,7 @@ function parseCreaturePlan(text: string | undefined): CreaturePlan {
     !plan.imagePrompt.trim()
   ) {
     throw new Error(
-      "The AI returned an incomplete response. Please try again."
+      "The AI returned an incomplete response. Please try again.",
     );
   }
   return { description: plan.description, imagePrompt: plan.imagePrompt };
@@ -107,12 +121,13 @@ export async function generateCreaturePlan(
   githubProfileUrl: string,
   contributions: number,
   followers: number = 0,
-  stars: number = 0
+  stars: number = 0,
 ) {
-  const response = await ai.models.generateContent({
-    model: process.env.GEMINI_TEXT_MODEL ?? "gemini-2.5-flash",
-    config: { responseMimeType: "application/json" },
-    contents: `
+  const response = await ai.models
+    .generateContent({
+      model: process.env.GEMINI_TEXT_MODEL ?? "gemini-2.5-flash",
+      config: { responseMimeType: "application/json" },
+      contents: `
       Github user: ${githubProfileUrl}
       Contributions: ${contributions}
       Followers: ${followers}
@@ -178,7 +193,16 @@ export async function generateCreaturePlan(
         - "description": the public creature description, displayed to users word for word. It MUST start with "Base creature: <Monster Manual creature name> (CR <CR>)", followed by 2–4 vivid sentences (pose, gear, aura, habitat) with details about the creature's abilities and powers.
         - "imagePrompt": one rich visual prompt for an image generation model depicting that exact creature. Describe its appearance, pose, gear or armor, magical aura or effects, environment, lighting and mood. The creature can come from any fantasy realm: forests, dungeons, nether, oceans, mountains, mythic planes. The image must reflect the creature's tier, commander potential, and magical abilities, and be visually striking, detailed, unique, and clearly tiered. End the prompt with: no text in the image.
         `,
-  });
+    })
+    .catch((error: unknown) => {
+      const status = (error as { status?: number })?.status;
+      if (status === 429) {
+        throw new Error(
+          "Gemini text quota exceeded (429): the free Gemini plan is rate limited right now. Please try again in a bit.",
+        );
+      }
+      throw error;
+    });
 
   return parseCreaturePlan(response.text);
 }
@@ -190,7 +214,7 @@ export async function generateCreatureArt(imagePrompt: string) {
   const apiToken = process.env.CLOUDFLARE_API_TOKEN;
   if (!accountId || !apiToken) {
     throw new Error(
-      "Image generation is not configured: CLOUDFLARE_ACCOUNT_ID and CLOUDFLARE_API_TOKEN must be set."
+      "Image generation is not configured: CLOUDFLARE_ACCOUNT_ID and CLOUDFLARE_API_TOKEN must be set.",
     );
   }
 
@@ -203,7 +227,7 @@ export async function generateCreatureArt(imagePrompt: string) {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({ prompt: imagePrompt, steps: 4 }),
-    }
+    },
   );
 
   if (!response.ok) {
@@ -216,7 +240,7 @@ export async function generateCreatureArt(imagePrompt: string) {
       // Keep the error short; the status alone is enough.
     }
     throw new Error(
-      `Cloudflare image generation failed with status ${response.status}.${detail}`
+      `Cloudflare image generation failed with status ${response.status}.${detail}`,
     );
   }
 
@@ -241,7 +265,7 @@ export async function submitGithubForm(githubProfileUrl: string) {
       canonicalUrl,
       contributions,
       followers,
-      stars
+      stars,
     );
     const imageBase64 = await generateCreatureArt(plan.imagePrompt);
 

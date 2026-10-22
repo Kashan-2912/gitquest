@@ -21,7 +21,7 @@ const formSchema = z.object({
     .string()
     .regex(
       /^https:\/\/github\.com\/[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?\/?$/,
-      "Enter a full GitHub profile URL, e.g. https://github.com/username"
+      "Enter a full GitHub profile URL, e.g. https://github.com/username",
     ),
 });
 
@@ -40,12 +40,11 @@ export function GithubForm() {
       await submitGithubForm(data.githubProfileUrl);
       toast.success("Github stats fetched successfully!");
     } catch (error) {
-
       if (isRedirectError(error)) {
         throw error;
       }
-      toast.error("Failed to fetch Github profile stats.");
-      console.error("Error fetching Github profile stats:", error);
+      toast.error("Summon failed. Please try again in a bit.");
+      console.error("Error during summon:", error);
     } finally {
       setLoading(false);
     }
@@ -69,8 +68,20 @@ export function GithubForm() {
                       placeholder="https://github.com/username"
                       autoComplete="off"
                     />
-                    <Button className={"cursor-pointer"} type="submit" form="form-rhf-demo" disabled={loading}>
-                      {loading ? <HugeiconsIcon className="animate-spin" icon={Loading03Icon} /> : "Summon"}
+                    <Button
+                      className={"cursor-pointer"}
+                      type="submit"
+                      form="form-rhf-demo"
+                      disabled={loading}
+                    >
+                      {loading ? (
+                        <HugeiconsIcon
+                          className="animate-spin"
+                          icon={Loading03Icon}
+                        />
+                      ) : (
+                        "Summon"
+                      )}
                     </Button>
                   </div>
 
