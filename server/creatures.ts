@@ -1,9 +1,23 @@
 import { db } from "@/db/drizzle";
 import { creatures, InsertCreature } from "@/db/schema";
-import { count, gt } from "drizzle-orm";
+import { count, gt, sql } from "drizzle-orm";
 
 export async function saveCreature(creature: InsertCreature) {
   try {
+    // One creature per GitHub profile: re-summoning updates the existing
+    // row instead of adding a duplicate to the leaderboard.
+    const existing = await db.query.creatures.findFirst({
+      where: (creatures, { eq }) =>
+        eq(creatures.githubProfileUrl, creature.githubProfileUrl),
+    });
+    if (existing) {
+      const [updated] = await db
+        .update(creatures)
+        .set({ ...creature, updateAt: new Date() })
+        .where(sql`${creatures.id} = ${existing.id}`)
+        .returning();
+      return updated;
+    }
     const [newCreature] = await db
       .insert(creatures)
       .values(creature)
@@ -11,19 +25,6 @@ export async function saveCreature(creature: InsertCreature) {
     return newCreature;
   } catch (error) {
     console.error("Error in saveCreature:", error);
-    throw error;
-  }
-}
-
-export async function getCreature(creatureId: string) {
-  try {
-    const creature = await db.query.creatures.findFirst({
-      where: (creatures, { eq }) => eq(creatures.id, creatureId),
-    });
-
-    return creature;
-  } catch (error) {
-    console.error("Error in getCreature:", error);
     throw error;
   }
 }
@@ -36,7 +37,7 @@ export async function getTenLatestCreatures() {
     });
     return creatures;
   } catch (error) {
-    console.error("Error in getSixLatestCreatures:", error);
+    console.error("Error in getTenLatestCreatures:", error);
     throw error;
   }
 }
@@ -78,7 +79,10 @@ export async function getCreatureByGithubUsername(githubUsername: string) {
   console.log(githubUrl);
   try {
     const creature = await db.query.creatures.findFirst({
-      where: (creatures, { eq }) => eq(creatures.githubProfileUrl, githubUrl),
+      // Case-insensitive: GitHub usernames are case-insensitive, so a
+      // profile saved as one case must be found under any other case.
+      where: () =>
+        sql`lower(${creatures.githubProfileUrl}) = lower(${githubUrl})`,
     });
     // console.log(creature)
     return creature;

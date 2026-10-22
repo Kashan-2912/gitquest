@@ -17,7 +17,12 @@ import { Loading03Icon } from "@hugeicons/core-free-icons";
 import { isRedirectError } from "next/dist/client/components/redirect-error";
 
 const formSchema = z.object({
-  githubProfileUrl: z.string().startsWith("https://github.com/"),
+  githubProfileUrl: z
+    .string()
+    .regex(
+      /^https:\/\/github\.com\/[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?\/?$/,
+      "Enter a full GitHub profile URL, e.g. https://github.com/username"
+    ),
 });
 
 export function GithubForm() {
