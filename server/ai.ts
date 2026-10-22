@@ -16,22 +16,36 @@ function parseGithubUsername(githubProfileUrl: string) {
   const username = cleaned.split("/").pop() ?? "";
   if (!USERNAME_PATTERN.test(username)) {
     throw new Error(
-      "Invalid GitHub profile URL. Use https://github.com/<username>."
+      "Invalid GitHub profile URL. Use https://github.com/<username>.",
     );
   }
   return username;
 }
 
+function githubHeaders() {
+  const headers: Record<string, string> = {
+    Accept: "application/vnd.github+json",
+  };
+  // Optional but recommended in production: unauthenticated GitHub API calls
+  // are limited to 60/hour per IP, and hosting platforms share IPs, so the
+  // limit is often already used up by strangers. Any token (no scopes needed
+  // for public data) raises the limit to 5,000/hour.
+  if (process.env.GITHUB_TOKEN) {
+    headers.Authorization = `Bearer ${process.env.GITHUB_TOKEN}`;
+  }
+  return headers;
+}
+
 export async function fetchGithubStats(username: string) {
   const response = await fetch(
     `https://api.github.com/search/commits?q=author:${username}`,
-    { headers: { Accept: "application/vnd.github+json" } }
+    { headers: githubHeaders() },
   );
   if (!response.ok) {
     throw new Error(
       response.status === 422 || response.status === 404
         ? `GitHub user "${username}" was not found.`
-        : `GitHub stats request failed with status ${response.status}.`
+        : `GitHub stats request failed with status ${response.status}.`,
     );
   }
   const data = await response.json();
@@ -47,11 +61,11 @@ export async function fetchGithubProfile(username: string) {
   try {
     const [userRes, reposRes] = await Promise.all([
       fetch(`https://api.github.com/users/${username}`, {
-        headers: { Accept: "application/vnd.github+json" },
+        headers: githubHeaders(),
       }),
       fetch(
         `https://api.github.com/users/${username}/repos?per_page=100&type=owner`,
-        { headers: { Accept: "application/vnd.github+json" } }
+        { headers: githubHeaders() },
       ),
     ]);
     if (!userRes.ok || !reposRes.ok) return { followers: 0, stars: 0 };
@@ -60,7 +74,7 @@ export async function fetchGithubProfile(username: string) {
     const stars = Array.isArray(repos)
       ? repos.reduce(
           (sum, repo) => sum + (repo.stargazers_count ?? 0),
-          0 as number
+          0 as number,
         )
       : 0;
     return { followers: user.followers ?? 0, stars };
@@ -73,11 +87,12 @@ export async function generateCreatureImage(
   githubProfileUrl: string,
   contributions: number,
   followers: number = 0,
-  stars: number = 0
+  stars: number = 0,
 ) {
-  const response = await ai.models.generateContent({
-    model: "gemini-2.5-flash-image",
-    contents: `
+  const response = await ai.models
+    .generateContent({
+      model: "gemini-2.5-flash-image",
+      contents: `
       Github user: ${githubProfileUrl}
       Contributions: ${contributions}
       Followers: ${followers}
@@ -151,7 +166,16 @@ export async function generateCreatureImage(
         - Make the creature visually striking, detailed, unique, and clearly tiered
         - Don't put any text on the image.
         `,
-  });
+    })
+    .catch((error: unknown) => {
+      const status = (error as { status?: number })?.status;
+      if (status === 429) {
+        throw new Error(
+          "Gemini image quota exceeded (429): the API key's project has no image-generation quota left. Enable billing on the Google Cloud project or wait for the quota window to reset.",
+        );
+      }
+      throw error;
+    });
 
   return response;
 }
@@ -169,7 +193,7 @@ export async function submitGithubForm(githubProfileUrl: string) {
       canonicalUrl,
       contributions,
       followers,
-      stars
+      stars,
     );
 
     const description =
