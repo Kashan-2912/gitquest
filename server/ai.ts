@@ -123,11 +123,10 @@ export async function generateCreaturePlan(
   followers: number = 0,
   stars: number = 0,
 ) {
-  const response = await ai.models
-    .generateContent({
-      model: process.env.GEMINI_TEXT_MODEL ?? "gemini-2.5-flash",
-      config: { responseMimeType: "application/json" },
-      contents: `
+  const response = await ai.models.generateContent({
+    model: process.env.GEMINI_TEXT_MODEL ?? "gemini-2.5-flash",
+    config: { responseMimeType: "application/json" },
+    contents: `
       Github user: ${githubProfileUrl}
       Contributions: ${contributions}
       Followers: ${followers}
@@ -193,18 +192,49 @@ export async function generateCreaturePlan(
         - "description": the public creature description, displayed to users word for word. It MUST start with "Base creature: <Monster Manual creature name> (CR <CR>)", followed by 2–4 vivid sentences (pose, gear, aura, habitat) with details about the creature's abilities and powers.
         - "imagePrompt": one rich visual prompt for an image generation model depicting that exact creature. Describe its appearance, pose, gear or armor, magical aura or effects, environment, lighting and mood. The creature can come from any fantasy realm: forests, dungeons, nether, oceans, mountains, mythic planes. The image must reflect the creature's tier, commander potential, and magical abilities, and be visually striking, detailed, unique, and clearly tiered. End the prompt with: no text in the image.
         `,
-    })
-    .catch((error: unknown) => {
-      const status = (error as { status?: number })?.status;
-      if (status === 429) {
-        throw new Error(
-          "Gemini text quota exceeded (429): the free Gemini plan is rate limited right now. Please try again in a bit.",
-        );
-      }
-      throw error;
-    });
+  });
 
   return parseCreaturePlan(response.text);
+}
+
+function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+// The free Gemini text models regularly answer 503 ("model experiencing
+// high demand") or 429 (per-minute rate limit) under load; both usually
+// clear within seconds, so retry a few times before troubling the user.
+async function generateCreaturePlanWithRetry(
+  githubProfileUrl: string,
+  contributions: number,
+  followers: number,
+  stars: number,
+) {
+  let lastError: unknown;
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    try {
+      return await generateCreaturePlan(
+        githubProfileUrl,
+        contributions,
+        followers,
+        stars,
+      );
+    } catch (error) {
+      lastError = error;
+      const status = (error as { status?: number })?.status;
+      if (status !== 503 && status !== 429) throw error;
+      if (attempt < 3) await sleep(2000 * attempt);
+    }
+  }
+  const status = (lastError as { status?: number })?.status;
+  if (status === 429) {
+    throw new Error(
+      "Gemini text quota exceeded (429): the free Gemini plan is rate limited right now. Please try again in a bit.",
+    );
+  }
+  throw new Error(
+    "Gemini is busy right now (503): the free model is overloaded. Please try again in a minute.",
+  );
 }
 
 const CLOUDFLARE_IMAGE_MODEL = "@cf/black-forest-labs/flux-1-schnell";
@@ -261,7 +291,7 @@ export async function submitGithubForm(githubProfileUrl: string) {
     const stats = await fetchGithubStats(username);
     const contributions = stats.total_count as number;
     const { followers, stars } = await fetchGithubProfile(username);
-    const plan = await generateCreaturePlan(
+    const plan = await generateCreaturePlanWithRetry(
       canonicalUrl,
       contributions,
       followers,
