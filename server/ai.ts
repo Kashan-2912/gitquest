@@ -83,7 +83,41 @@ export async function fetchGithubProfile(username: string) {
   }
 }
 
-export async function generateCreatureImage(
+type CreaturePlan = {
+  description: string;
+  imagePrompt: string;
+};
+
+function parseCreaturePlan(text: string | undefined): CreaturePlan {
+  if (!text) {
+    throw new Error("The AI returned an empty response. Please try again.");
+  }
+  // The model is asked for raw JSON, but strip code fences just in case.
+  const cleaned = text
+    .trim()
+    .replace(/^```(?:json)?\s*/i, "")
+    .replace(/\s*```$/, "");
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(cleaned);
+  } catch {
+    throw new Error("The AI returned an invalid response. Please try again.");
+  }
+  const plan = parsed as Partial<CreaturePlan>;
+  if (
+    typeof plan.description !== "string" ||
+    !plan.description.trim() ||
+    typeof plan.imagePrompt !== "string" ||
+    !plan.imagePrompt.trim()
+  ) {
+    throw new Error(
+      "The AI returned an incomplete response. Please try again.",
+    );
+  }
+  return { description: plan.description, imagePrompt: plan.imagePrompt };
+}
+
+export async function generateCreaturePlan(
   githubProfileUrl: string,
   contributions: number,
   followers: number = 0,
@@ -91,7 +125,8 @@ export async function generateCreatureImage(
 ) {
   const response = await ai.models
     .generateContent({
-      model: "gemini-2.5-flash-image",
+      model: process.env.GEMINI_TEXT_MODEL ?? "gemini-2.5-flash",
+      config: { responseMimeType: "application/json" },
       contents: `
       Github user: ${githubProfileUrl}
       Contributions: ${contributions}
@@ -151,33 +186,70 @@ export async function generateCreatureImage(
         - Control their surroundings (storms, fire, void, light, shadows)
         - Appear confident, dominant, or terrifying
 
-        Requirements for the name:
-        - The name should be a creature name.
+        Output format (IMPORTANT — follow exactly):
+        Respond with JSON only. No markdown, no code fences, no extra text. Use exactly this shape:
+        {"description": "...", "imagePrompt": "..."}
 
-        Requirements for the description:
-        - The description should be a short description of the creature, with some details about its abilities and powers.
-
-        Requirements for the image prompt:
-        - Creature can come from any fantasy realm: forests, dungeons, nether, oceans, mountains, mythic planes
-        - In your TEXT OUTPUT (not on the image), START with: "Base creature: <Monster Manual creature name> (CR <CR>)"
-        - Then add 2–4 sentences of vivid notes (pose, gear, aura, habitat) for downstream prompt generation.
-        - Image should reflect creature tier, commander potential, and magical abilities
-        - Be creative, but keep the base creature aligned to the D&D 5e Monster Manual choice for the tier
-        - Make the creature visually striking, detailed, unique, and clearly tiered
-        - Don't put any text on the image.
+        - "description": the public creature description, displayed to users word for word. It MUST start with "Base creature: <Monster Manual creature name> (CR <CR>)", followed by 2–4 vivid sentences (pose, gear, aura, habitat) with details about the creature's abilities and powers.
+        - "imagePrompt": one rich visual prompt for an image generation model depicting that exact creature. Describe its appearance, pose, gear or armor, magical aura or effects, environment, lighting and mood. The creature can come from any fantasy realm: forests, dungeons, nether, oceans, mountains, mythic planes. The image must reflect the creature's tier, commander potential, and magical abilities, and be visually striking, detailed, unique, and clearly tiered. End the prompt with: no text in the image.
         `,
     })
     .catch((error: unknown) => {
       const status = (error as { status?: number })?.status;
       if (status === 429) {
         throw new Error(
-          "Gemini image quota exceeded (429): the API key's project has no image-generation quota left. Enable billing on the Google Cloud project or wait for the quota window to reset.",
+          "Gemini text quota exceeded (429): the free Gemini plan is rate limited right now. Please try again in a bit.",
         );
       }
       throw error;
     });
 
-  return response;
+  return parseCreaturePlan(response.text);
+}
+
+const CLOUDFLARE_IMAGE_MODEL = "@cf/black-forest-labs/flux-1-schnell";
+
+export async function generateCreatureArt(imagePrompt: string) {
+  const accountId = process.env.CLOUDFLARE_ACCOUNT_ID;
+  const apiToken = process.env.CLOUDFLARE_API_TOKEN;
+  if (!accountId || !apiToken) {
+    throw new Error(
+      "Image generation is not configured: CLOUDFLARE_ACCOUNT_ID and CLOUDFLARE_API_TOKEN must be set.",
+    );
+  }
+
+  const response = await fetch(
+    `https://api.cloudflare.com/client/v4/accounts/${accountId}/ai/run/${CLOUDFLARE_IMAGE_MODEL}`,
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ prompt: imagePrompt, steps: 4 }),
+    },
+  );
+
+  if (!response.ok) {
+    let detail = "";
+    try {
+      const data = await response.json();
+      const message = data?.errors?.[0]?.message;
+      if (typeof message === "string") detail = ` ${message.slice(0, 200)}`;
+    } catch {
+      // Keep the error short; the status alone is enough.
+    }
+    throw new Error(
+      `Cloudflare image generation failed with status ${response.status}.${detail}`,
+    );
+  }
+
+  const data = await response.json();
+  const image = data?.result?.image;
+  if (!data?.success || typeof image !== "string") {
+    throw new Error("Cloudflare did not return an image. Please try again.");
+  }
+  return image;
 }
 
 export async function submitGithubForm(githubProfileUrl: string) {
@@ -189,27 +261,16 @@ export async function submitGithubForm(githubProfileUrl: string) {
     const stats = await fetchGithubStats(username);
     const contributions = stats.total_count as number;
     const { followers, stars } = await fetchGithubProfile(username);
-    const image = await generateCreatureImage(
+    const plan = await generateCreaturePlan(
       canonicalUrl,
       contributions,
       followers,
       stars,
     );
+    const imageBase64 = await generateCreatureArt(plan.imagePrompt);
 
-    const description =
-      image.text ?? "A fantasy creature summoned by GitQuest.";
-
-    const parts = image.candidates?.[0]?.content?.parts;
-    if (!parts) {
-      throw new Error("The AI returned an invalid response. Please try again.");
-    }
-
-    const imagePart = parts.find((part) => part.inlineData?.data);
-    if (!imagePart || typeof imagePart.inlineData?.data !== "string") {
-      throw new Error("The AI did not return an image. Please try again.");
-    }
-
-    const buffer = Buffer.from(imagePart.inlineData.data, "base64");
+    const description = plan.description;
+    const buffer = Buffer.from(imageBase64, "base64");
     const blob = await put(`img-${username}.png`, buffer, {
       access: "public",
     });
