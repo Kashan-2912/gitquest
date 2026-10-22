@@ -49,7 +49,7 @@ GitQuest transforms your GitHub profile into a unique fantasy creature based on 
 1. Clone the repository:
 
 ```bash
-git clone https://github.com/yourusername/gitquest.git
+git clone https://github.com/Kashan-2912/gitquest.git
 cd gitquest
 ```
 
